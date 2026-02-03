@@ -254,8 +254,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   startButton: {fileID: 1705878424}
-  targitScene: Clinic
-  currentScene: StartMenu
+  targetScene: Clinic
 --- !u!4 &326947168
 Transform:
   m_ObjectHideFlags: 0
