@@ -10,13 +10,6 @@ public class Patient : MonoBehaviour
     public float toothacheLevel = 100f;
 
     // 应用药剂
-    public void ApplyPotion(Potion potion)
-    {
-        if (potion == null) return;
-        ReduceCough(potion.coughReduce);
-        ReduceHeadache(potion.headacheReduce);
-        ReduceToothache(potion.toothacheReduce);
-    }
 
     // 各项减弱接口，值不能低于 0
     public void ReduceCough(float amount)
