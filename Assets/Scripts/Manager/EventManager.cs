@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Basic_Illness_cateragy : MonoBehaviour
+public class EventManager : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
