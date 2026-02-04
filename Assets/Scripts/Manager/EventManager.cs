@@ -1,18 +1,20 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class EventManager : MonoBehaviour
+public static class EventManager
 {
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
+    public static event Action<Herb> AddHerbEvent;
+    public static event Action<Medicine> AddMedicineEvent;//仓库增加物品事件
 
-    // Update is called once per frame
-    void Update()
+
+
+    public static void CallAddHerbEvent(Herb herb)
     {
-        
+        AddHerbEvent?.Invoke(herb);
     }
+    public static void CallAddMedicineEvent(Medicine medicine)
+    {
+        AddMedicineEvent?.Invoke(medicine);
+    }//仓库增加物品事件激活函数
 }
