@@ -14,8 +14,8 @@ public class Herb
     [SerializeField] int outsideWound;
     [Header("内伤")]
     [SerializeField] int internalWound;
-    public string getMedicineName => herbName;
-    public string getMedicineDetail => herbDetail;
+    public string getHerbName => herbName;
+    public string getHerbDetail => herbDetail;
     public int getMindWound => mindWound;
     public int getOutsideWound => outsideWound;
     public int getInternalWound => internalWound;

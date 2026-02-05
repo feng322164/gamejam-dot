@@ -27,7 +27,7 @@ MonoBehaviour:
     internalWound: 5
   - herbName: "\u84DD\u8272\u8349"
     herbDetail: "\u5F88\u84DD\u5F88\u84DD"
-    herbSprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
+    herbSprite: {fileID: -2413806693520163455, guid: ebe73ca9363db456bacf42c025bb4847, type: 3}
     mindWound: 5
     outsideWound: 5
     internalWound: 5

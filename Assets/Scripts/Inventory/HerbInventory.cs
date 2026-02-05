@@ -1,4 +1,3 @@
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,31 +5,31 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 [System.Serializable]
-public class MedicineInventory : MonoBehaviour
+public class HerbInventory : MonoBehaviour
 {
 
     public InventoryManager inventoryManager;
     [SerializeField]List<Button> buttons;//传入按钮
     [SerializeField]Image detailUI;
-    [SerializeField]TextMeshProUGUI medicineName;
-    [SerializeField]TextMeshProUGUI medicineDetail;
+    [SerializeField]TextMeshProUGUI herbName;
+    [SerializeField]TextMeshProUGUI herbDetail;
     [SerializeField]List<TextMeshProUGUI> textMeshProUGUIs;//传入按钮的文本
     int lastIndex = -1;
     void OnEnable()
     {
-        EventManager.MedicineInventoryUpdateEvent += UpdateUI;
+        EventManager.HerbInventoryUpdateEvent += UpdateUI;
     }
     void OnDisable()
     {
-        EventManager.MedicineInventoryUpdateEvent -= UpdateUI;
+        EventManager.HerbInventoryUpdateEvent -= UpdateUI;
     }
 
     void UpdateUI()
     {
-        for(int i = 0 ; i < 3 ; i++ )
+        for(int i = 0 ; i < 8 ; i++ )
         {
-            buttons[i].image.sprite = inventoryManager.GetMedicine(i).getMedicineSprite;
-            textMeshProUGUIs[i].text = inventoryManager.GetMedicine(i).getMedicineName;
+            buttons[i].image.sprite = inventoryManager.GetHerb(i).getHerbSprite;
+            textMeshProUGUIs[i].text = inventoryManager.GetHerb(i).getHerbName;
         }
     }//仓库更新的时候更新UI
 
@@ -57,8 +56,8 @@ public class MedicineInventory : MonoBehaviour
         if(lastIndex != i)
         {
             detailUI.gameObject.SetActive(true);
-            medicineName.text = inventoryManager.GetMedicine(i).getMedicineName;
-            medicineDetail.text = inventoryManager.GetMedicine(i).getMedicineDetail;
+            herbName.text = inventoryManager.GetHerb(i).getHerbName;
+            herbDetail.text = inventoryManager.GetHerb(i).getHerbDetail;
             lastIndex = i;
         }
         else

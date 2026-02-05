@@ -30,9 +30,12 @@ public class InventoryManager : MonoBehaviour
     {
         int maxHerbNumb;//当前天数最大的草药数目(限制草药的种类)
         maxHerbNumb = herbData.getHerbList.Count;
-        for(int i = 0 ; i < maxHerbNumb ; i ++)
+        for(int i = 0 ; i < 8 ; i ++)
         {
-            AddHerb(herbData.getHerbList[i]);
+            if( i< maxHerbNumb)
+                AddHerb(herbData.getHerbList[i]);
+            else
+                AddHerb(herbData.getHerbList[0]);
         }
 
 
@@ -50,6 +53,7 @@ public class InventoryManager : MonoBehaviour
 
 
         EventManager.CallMedicineInventoryUPdate();
+        EventManager.CallHerbInventoryUpdate();
     }
 
     void AddHerb(Herb herb)

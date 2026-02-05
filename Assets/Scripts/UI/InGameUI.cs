@@ -53,7 +53,7 @@ public class InGameUI : MonoBehaviour
             Text text = item.GetComponentInChildren<Text>();
             if (text != null)
             {
-                text.text = herb.getMedicineName;
+                text.text = herb.getHerbName;
             }
             /*
             Image img = item.GetComponentInChildren<Image>();
