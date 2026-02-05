@@ -1,37 +1,21 @@
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class ExampleClass : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
-
-    public int currentLevel = 0;
-
-    public enum State { MainMenu, Playing, Paused }
-    public State state = State.MainMenu;
-
-    void Awake()
+    private int patients = 2; // 当天总病人数
+    private int patientnow = 3;//当天剩余病人数
+    // 公开方法，用于更新一天的总病人数量并初始化这一天的剩余病人数目
+    public void PatientsToday()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        patients++;
+        Debug.Log($"这一天总的病人数: {patients}");
+        patientnow = patients;
     }
-
-    public void StartLevel(int index)
+    //公开方法，用于更新这一天剩余的病人数目
+    public void PatientOver()
     {
-        currentLevel = index;
-        state = State.Playing;
-        // Scene loading left to user; hook SceneManager.LoadScene(index) here if desired.
+        patientnow--;
+        Debug.Log($"这一天剩下的病人数: {patients}");
     }
-
-    public void ReturnToMenu()
-    {
-        state = State.MainMenu;
-        // SceneManager.LoadScene("MainMenu");
-    }
+    //公开方法
 }

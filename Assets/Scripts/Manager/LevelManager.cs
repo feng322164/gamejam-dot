@@ -13,7 +13,7 @@ public class LevelManager : MonoBehaviour
     public void CompleteLevel()
     {
         // advance or notify GameManager
-        if (GameManager.Instance != null)
-            GameManager.Instance.currentLevel = levelIndex;
+//        if (GameManager.Instance != null)
+ //          GameManager.Instance.currentLevel = levelIndex;
     }
 }
