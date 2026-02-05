@@ -15,7 +15,19 @@ MonoBehaviour:
   medicineList:
   - medicineName: "\u725B\u903C\u836F"
     medicineDetail: "\u5403\u4E86\u5C31\u5F88\u725B\u903C\u7684\u836F"
-    medicineSprite: {fileID: 0}
+    medicineSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    mindWound: 5
+    outsideWound: 5
+    internalWound: 5
+  - medicineName: "\u5927\u725B\u903C\u836F"
+    medicineDetail: "\u5403\u4E86\u5C31\u5F88\u7279\u522B\u725B\u903C\u7684\u836F\uFF0C\u5F88\u5389\u5BB3"
+    medicineSprite: {fileID: -5177388603050735206, guid: 8884154dfe85442a3a3578be807dbcdf, type: 3}
+    mindWound: 5
+    outsideWound: 5
+    internalWound: 5
+  - medicineName: "\u5403\u725B\u903C\u836F"
+    medicineDetail: "\u5403\u4E86\u5C31\u5F88\u7279\u522B\u725B\u903C\u7684\u836F\uFF0C\u5927\u6982"
+    medicineSprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
     mindWound: 5
     outsideWound: 5
     internalWound: 5

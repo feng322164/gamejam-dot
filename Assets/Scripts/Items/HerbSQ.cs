@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-[CreateAssetMenu(fileName = "MedicineSQ", menuName = "Game Data/Mesicines")]
+[CreateAssetMenu(fileName = "HerbSQ", menuName = "Game Data/Herbs")]
 public class HerbSQ : ScriptableObject
 {
     [SerializeField] private List<Herb> herbList = new List<Herb>();

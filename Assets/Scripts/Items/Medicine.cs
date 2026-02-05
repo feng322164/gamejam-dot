@@ -19,4 +19,5 @@ public class Medicine
     public int getMindWound => mindWound;
     public int getOutsideWound => outsideWound;
     public int getInternalWound => internalWound;
+    public Sprite getMedicineSprite => medicineSprite;
 }

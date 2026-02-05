@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6334353f3ec80a42a78c55c02f7df40, type: 3}
+  m_Name: HerbsData
+  m_EditorClassIdentifier: 
+  herbList:
+  - herbName: "\u7EFF\u8272\u8349"
+    herbDetail: "\u5F88\u7EFF\u5F88\u7EFF"
+    herbSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    mindWound: 5
+    outsideWound: 5
+    internalWound: 5
+  - herbName: "\u7EA2\u8272\u8349"
+    herbDetail: "\u5F88\u7EA2\u5F88\u7EA2"
+    herbSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    mindWound: 5
+    outsideWound: 5
+    internalWound: 5
+  - herbName: "\u84DD\u8272\u8349"
+    herbDetail: "\u5F88\u84DD\u5F88\u84DD"
+    herbSprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
+    mindWound: 5
+    outsideWound: 5
+    internalWound: 5
