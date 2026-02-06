@@ -2,20 +2,34 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 public class DayCounter : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("Main UI References")]
     [SerializeField] private Image clickableImage;
     [SerializeField] private Image closeButtonImage;
     [SerializeField] private Image additionalImage;
     [SerializeField] private TextMeshProUGUI dayText;
     [SerializeField] private TextMeshProUGUI additionalText;
 
+    [Header("Hidden UI References - Images")]
+    [SerializeField] private Image hiddenImage1; // 不可交互
+    [SerializeField] private Image hiddenImage2; // 点击后隐藏隐藏UI，恢复交互
+    [SerializeField] private Image hiddenImage3; // 点击后进入另一个场景
+
+    [Header("Hidden UI References - Texts")]
+    [SerializeField] private TextMeshProUGUI hiddenText1; // 不可交互
+    [SerializeField] private TextMeshProUGUI hiddenText2; // 点击后隐藏隐藏UI，恢复交互
+    [SerializeField] private TextMeshProUGUI hiddenText3; // 点击后进入另一个场景
+
+    [Header("Scene Settings")]
+    [SerializeField] private string targetSceneName = "NextScene";
+
     [Header("Hover Settings")]
-    [SerializeField] private Color closeButtonHoverColor = new Color(1f, 0.8f, 0.8f, 1f);
-    [SerializeField] private float clickableImageBrightness = 1.3f; // 悬停时变亮倍数
-    [SerializeField] private float clickableImageDarkness = 0.8f;   // 正常时变暗倍数
+    [SerializeField] private float hoverBrightness = 1.3f; // 所有UI的悬停变亮倍数
+    [SerializeField] private float normalDarkness = 0.8f;   // 所有UI的正常变暗倍数
     [SerializeField] private float colorChangeDuration = 0.2f;
 
     [Header("Other Settings")]
@@ -26,25 +40,36 @@ public class DayCounter : MonoBehaviour
     private Button imageButton;
     private Button closeButton;
     private Button additionalTextButton;
-    private Color clickableImageOriginalColor;
-    private bool isHoveringAdditionalText = false;
-    private bool isHoveringClickableImage = false;
-    private EventTrigger clickableImageEventTrigger; // 保存事件触发器引用
+
+    // 状态记录
+    private bool wasClickableImageDisabledBeforeClose = false;
+    private bool areHiddenUIsVisible = false;
+
+    // 存储所有UI的原始颜色和组件引用
+    private Dictionary<Graphic, Color> originalColors = new Dictionary<Graphic, Color>();
+    private Dictionary<Graphic, bool> isHovering = new Dictionary<Graphic, bool>();
+    private Dictionary<Graphic, Button> uiButtons = new Dictionary<Graphic, Button>();
 
     void Start()
     {
         InitializeComponents();
         UpdateDayText();
 
-        if (clickableImage != null)
-        {
-            clickableImageOriginalColor = clickableImage.color;
-            // 初始状态设为变暗
-            SetClickableImageDark();
-        }
+        // 存储原始颜色并设置初始变暗状态
+        StoreOriginalColors();
+        SetAllUIsDark();
+
+        // 开始时隐藏隐藏的UI元素
+        SetHiddenUIsVisible(false);
     }
 
     private void InitializeComponents()
+    {
+        InitializeMainUIComponents();
+        InitializeHiddenUIComponents();
+    }
+
+    private void InitializeMainUIComponents()
     {
         // 初始化可点击的Image
         if (clickableImage != null)
@@ -58,8 +83,8 @@ public class DayCounter : MonoBehaviour
             imageButton.onClick.RemoveAllListeners();
             imageButton.onClick.AddListener(OnImageClicked);
 
-            // 添加悬停事件
-            AddHoverEventsToClickableImage();
+            AddHoverEventsToUI(clickableImage, OnPointerEnterUI, OnPointerExitUI);
+            uiButtons[clickableImage] = imageButton;
         }
 
         // 初始化关闭按钮
@@ -71,6 +96,9 @@ public class DayCounter : MonoBehaviour
                 closeButton = closeButtonImage.gameObject.AddComponent<Button>();
             }
             closeButton.onClick.AddListener(OnCloseButtonClicked);
+
+            AddHoverEventsToUI(closeButtonImage, OnPointerEnterUI, OnPointerExitUI);
+            uiButtons[closeButtonImage] = closeButton;
         }
 
         // 初始化第二个文本
@@ -83,37 +111,117 @@ public class DayCounter : MonoBehaviour
             }
             additionalTextButton.onClick.AddListener(OnCloseButtonClicked);
 
-            AddHoverEventsToImage(additionalText, OnPointerEnterAdditionalText, OnPointerExitAdditionalText);
+            AddHoverEventsToUI(additionalText, OnPointerEnterUI, OnPointerExitUI);
+            uiButtons[additionalText] = additionalTextButton;
         }
     }
 
-    // 为clickable image添加悬停事件
-    private void AddHoverEventsToClickableImage()
+    private void InitializeHiddenUIComponents()
     {
-        clickableImageEventTrigger = clickableImage.GetComponent<EventTrigger>();
-        if (clickableImageEventTrigger == null)
-        {
-            clickableImageEventTrigger = clickableImage.gameObject.AddComponent<EventTrigger>();
-        }
+        // 初始化隐藏的UI Images
+        InitializeHiddenImage(hiddenImage1, false, null); // 不可交互
+        InitializeHiddenImage(hiddenImage2, true, OnHiddenImage2Clicked); // 隐藏隐藏UI，恢复交互
+        InitializeHiddenImage(hiddenImage3, true, OnHiddenImage3Clicked); // 进入另一个场景
 
-        // 添加悬停事件
-        AddHoverEventsToEventTrigger(clickableImageEventTrigger, OnPointerEnterClickableImage, OnPointerExitClickableImage);
+        // 初始化隐藏的UI Texts
+        InitializeHiddenText(hiddenText1, false, null); // 不可交互
+        InitializeHiddenText(hiddenText2, true, OnHiddenText2Clicked); // 隐藏隐藏UI，恢复交互
+        InitializeHiddenText(hiddenText3, true, OnHiddenText3Clicked); // 进入另一个场景
     }
 
-    // 为其他UI元素添加悬停事件
-    private void AddHoverEventsToImage(Graphic uiElement, UnityEngine.Events.UnityAction<PointerEventData> enterAction,
-                                     UnityEngine.Events.UnityAction<PointerEventData> exitAction)
+    private void InitializeHiddenImage(Image image, bool interactable, UnityEngine.Events.UnityAction clickAction)
+    {
+        if (image != null)
+        {
+            Button button = image.GetComponent<Button>();
+            if (button == null && interactable)
+            {
+                button = image.gameObject.AddComponent<Button>();
+            }
+
+            if (button != null)
+            {
+                button.interactable = interactable;
+                button.onClick.RemoveAllListeners();
+                if (clickAction != null)
+                {
+                    button.onClick.AddListener(clickAction);
+                }
+
+                // 为可交互的隐藏UI添加悬停事件
+                if (interactable)
+                {
+                    AddHoverEventsToUI(image, OnPointerEnterUI, OnPointerExitUI);
+                    uiButtons[image] = button;
+                }
+            }
+        }
+    }
+
+    private void InitializeHiddenText(TextMeshProUGUI text, bool interactable, UnityEngine.Events.UnityAction clickAction)
+    {
+        if (text != null)
+        {
+            Button button = text.GetComponent<Button>();
+            if (button == null && interactable)
+            {
+                button = text.gameObject.AddComponent<Button>();
+            }
+
+            if (button != null)
+            {
+                button.interactable = interactable;
+                button.onClick.RemoveAllListeners();
+                if (clickAction != null)
+                {
+                    button.onClick.AddListener(clickAction);
+                }
+
+                // 为可交互的隐藏UI添加悬停事件
+                if (interactable)
+                {
+                    AddHoverEventsToUI(text, OnPointerEnterUI, OnPointerExitUI);
+                    uiButtons[text] = button;
+                }
+            }
+        }
+    }
+
+    // 存储所有UI的原始颜色
+    private void StoreOriginalColors()
+    {
+        StoreColorIfExists(clickableImage);
+        StoreColorIfExists(closeButtonImage);
+        StoreColorIfExists(additionalImage);
+        StoreColorIfExists(dayText);
+        StoreColorIfExists(additionalText);
+        StoreColorIfExists(hiddenImage1);
+        StoreColorIfExists(hiddenImage2);
+        StoreColorIfExists(hiddenImage3);
+        StoreColorIfExists(hiddenText1);
+        StoreColorIfExists(hiddenText2);
+        StoreColorIfExists(hiddenText3);
+    }
+
+    private void StoreColorIfExists(Graphic uiElement)
+    {
+        if (uiElement != null)
+        {
+            originalColors[uiElement] = uiElement.color;
+            isHovering[uiElement] = false;
+        }
+    }
+
+    // 为UI添加悬停事件
+    private void AddHoverEventsToUI(Graphic uiElement, UnityEngine.Events.UnityAction<PointerEventData> enterAction,
+                                  UnityEngine.Events.UnityAction<PointerEventData> exitAction)
     {
         EventTrigger eventTrigger = uiElement.GetComponent<EventTrigger>();
-        if (eventTrigger == null) eventTrigger = uiElement.gameObject.AddComponent<EventTrigger>();
+        if (eventTrigger == null)
+        {
+            eventTrigger = uiElement.gameObject.AddComponent<EventTrigger>();
+        }
 
-        AddHoverEventsToEventTrigger(eventTrigger, enterAction, exitAction);
-    }
-
-    // 为事件触发器添加悬停事件
-    private void AddHoverEventsToEventTrigger(EventTrigger eventTrigger, UnityEngine.Events.UnityAction<PointerEventData> enterAction,
-                                            UnityEngine.Events.UnityAction<PointerEventData> exitAction)
-    {
         eventTrigger.triggers.Clear();
 
         EventTrigger.Entry enterEntry = new EventTrigger.Entry();
@@ -127,71 +235,80 @@ public class DayCounter : MonoBehaviour
         eventTrigger.triggers.Add(exitEntry);
     }
 
-    // 移除clickable image的悬停事件
-    private void RemoveHoverEventsFromClickableImage()
+    // 检查UI是否可交互
+    private bool IsUIInteractable(Graphic uiElement)
     {
-        if (clickableImageEventTrigger != null)
+        if (uiElement == null) return false;
+
+        // 检查是否有Button组件并且可交互
+        if (uiButtons.ContainsKey(uiElement))
         {
-            clickableImageEventTrigger.triggers.Clear();
+            return uiButtons[uiElement].interactable;
+        }
+
+        return false;
+    }
+
+    // 鼠标进入UI时的统一处理
+    private void OnPointerEnterUI(PointerEventData eventData)
+    {
+        Graphic hoveredUI = eventData.pointerEnter.GetComponent<Graphic>();
+        if (hoveredUI != null && originalColors.ContainsKey(hoveredUI))
+        {
+            isHovering[hoveredUI] = true;
+
+            // 只有在可交互状态时才变亮
+            if (IsUIInteractable(hoveredUI))
+            {
+                SetUIBright(hoveredUI);
+            }
         }
     }
 
-    // 恢复clickable image的悬停事件
-    private void RestoreHoverEventsToClickableImage()
+    // 鼠标离开UI时的统一处理
+    private void OnPointerExitUI(PointerEventData eventData)
     {
-        if (clickableImageEventTrigger != null)
+        Graphic exitedUI = eventData.pointerEnter.GetComponent<Graphic>();
+        if (exitedUI != null && originalColors.ContainsKey(exitedUI))
         {
-            AddHoverEventsToEventTrigger(clickableImageEventTrigger, OnPointerEnterClickableImage, OnPointerExitClickableImage);
+            isHovering[exitedUI] = false;
+            SetUIDark(exitedUI);
         }
     }
 
-    private void OnPointerEnterClickableImage(PointerEventData eventData)
+    // 设置UI变亮
+    private void SetUIBright(Graphic uiElement)
     {
-        isHoveringClickableImage = true;
-        SetClickableImageBright(); // 鼠标进入时变亮
-    }
-
-    private void OnPointerExitClickableImage(PointerEventData eventData)
-    {
-        isHoveringClickableImage = false;
-        SetClickableImageDark(); // 鼠标离开时变暗
-    }
-
-    private void OnPointerEnterAdditionalText(PointerEventData eventData)
-    {
-        isHoveringAdditionalText = true;
-        if (closeButtonImage != null)
-            closeButtonImage.CrossFadeColor(closeButtonHoverColor, colorChangeDuration, true, true);
-    }
-
-    private void OnPointerExitAdditionalText(PointerEventData eventData)
-    {
-        isHoveringAdditionalText = false;
-        if (closeButtonImage != null)
-            closeButtonImage.CrossFadeColor(Color.white, colorChangeDuration, true, true);
-    }
-
-    // 设置clickable image变亮
-    private void SetClickableImageBright()
-    {
-        if (clickableImage != null && clickableImage.gameObject.activeInHierarchy)
+        if (uiElement != null && uiElement.gameObject.activeInHierarchy && originalColors.ContainsKey(uiElement))
         {
-            Color brightColor = GetModifiedColor(clickableImageOriginalColor, clickableImageBrightness);
-            clickableImage.CrossFadeColor(brightColor, colorChangeDuration, true, true);
+            Color brightColor = GetModifiedColor(originalColors[uiElement], hoverBrightness);
+            uiElement.CrossFadeColor(brightColor, colorChangeDuration, true, true);
         }
     }
 
-    // 设置clickable image变暗
-    private void SetClickableImageDark()
+    // 设置UI变暗
+    private void SetUIDark(Graphic uiElement)
     {
-        if (clickableImage != null && clickableImage.gameObject.activeInHierarchy)
+        if (uiElement != null && uiElement.gameObject.activeInHierarchy && originalColors.ContainsKey(uiElement))
         {
-            Color darkColor = GetModifiedColor(clickableImageOriginalColor, clickableImageDarkness);
-            clickableImage.CrossFadeColor(darkColor, colorChangeDuration, true, true);
+            Color darkColor = GetModifiedColor(originalColors[uiElement], normalDarkness);
+            uiElement.CrossFadeColor(darkColor, colorChangeDuration, true, true);
         }
     }
 
-    // 获取修改后的颜色（亮度/暗度调整）
+    // 设置所有UI变暗
+    private void SetAllUIsDark()
+    {
+        foreach (var uiElement in originalColors.Keys)
+        {
+            if (uiElement != null)
+            {
+                SetUIDark(uiElement);
+            }
+        }
+    }
+
+    // 获取修改后的颜色
     private Color GetModifiedColor(Color baseColor, float multiplier)
     {
         return new Color(
@@ -202,9 +319,151 @@ public class DayCounter : MonoBehaviour
         );
     }
 
+    // 点击关闭按钮的处理
+    private void OnCloseButtonClicked()
+    {
+        // 记录clickable image的当前状态
+        wasClickableImageDisabledBeforeClose = (imageButton != null && !imageButton.interactable);
+
+        // 禁用主UI的交互
+        SetMainUIInteractable(false);
+
+        // 显示隐藏的UI
+        SetHiddenUIsVisible(true);
+
+        areHiddenUIsVisible = true;
+    }
+
+    // 隐藏UI Image 2的点击事件
+    private void OnHiddenImage2Clicked()
+    {
+        HideHiddenUIsAndRestore();
+    }
+
+    // 隐藏UI Image 3的点击事件
+    private void OnHiddenImage3Clicked()
+    {
+        LoadTargetScene();
+    }
+
+    // 隐藏UI Text 2的点击事件
+    private void OnHiddenText2Clicked()
+    {
+        HideHiddenUIsAndRestore();
+    }
+
+    // 隐藏UI Text 3的点击事件
+    private void OnHiddenText3Clicked()
+    {
+        LoadTargetScene();
+    }
+
+    // 隐藏隐藏的UI并恢复主UI交互
+    private void HideHiddenUIsAndRestore()
+    {
+        SetHiddenUIsVisible(false);
+        areHiddenUIsVisible = false;
+
+        // 恢复主UI交互
+        SetMainUIInteractable(true, !wasClickableImageDisabledBeforeClose);
+    }
+
+    // 加载目标场景
+    private void LoadTargetScene()
+    {
+        if (!string.IsNullOrEmpty(targetSceneName))
+        {
+            SceneManager.LoadScene(targetSceneName);
+        }
+        else
+        {
+            Debug.LogError("目标场景名称为空！");
+        }
+    }
+
+    // 设置隐藏UI的显示状态
+    private void SetHiddenUIsVisible(bool visible)
+    {
+        SetUIVisibility(hiddenImage1, visible);
+        SetUIVisibility(hiddenImage2, visible);
+        SetUIVisibility(hiddenImage3, visible);
+        SetUIVisibility(hiddenText1, visible);
+        SetUIVisibility(hiddenText2, visible);
+        SetUIVisibility(hiddenText3, visible);
+
+        // 显示时设置正确的颜色状态
+        if (visible)
+        {
+            foreach (var uiElement in new Graphic[] { hiddenImage1, hiddenImage2, hiddenImage3, hiddenText1, hiddenText2, hiddenText3 })
+            {
+                if (uiElement != null)
+                {
+                    SetUIDark(uiElement);
+                }
+            }
+        }
+    }
+
+    // 设置主UI的交互状态
+    private void SetMainUIInteractable(bool interactable, bool restoreClickableImage = true)
+    {
+        if (closeButton != null) closeButton.interactable = interactable;
+        if (additionalTextButton != null) additionalTextButton.interactable = interactable;
+
+        // 特殊处理clickable image
+        if (imageButton != null)
+        {
+            if (interactable && (!restoreClickableImage || wasClickableImageDisabledBeforeClose))
+            {
+                imageButton.interactable = false;
+            }
+            else
+            {
+                imageButton.interactable = interactable;
+            }
+        }
+
+        // 设置透明度表示交互状态
+        float alpha = interactable ? 1f : 0.5f;
+        SetMainUIsAlpha(alpha);
+
+        // 如果UI变为不可交互状态，确保它们不会保持变亮状态
+        if (!interactable)
+        {
+            foreach (var uiElement in new Graphic[] { clickableImage, closeButtonImage, additionalText })
+            {
+                if (uiElement != null && isHovering.ContainsKey(uiElement) && isHovering[uiElement])
+                {
+                    SetUIDark(uiElement);
+                    isHovering[uiElement] = false;
+                }
+            }
+        }
+    }
+
+    // 设置主UI的透明度
+    private void SetMainUIsAlpha(float alpha)
+    {
+        SetUIAlpha(clickableImage, alpha);
+        SetUIAlpha(closeButtonImage, alpha);
+        SetUIAlpha(additionalImage, alpha);
+        SetUIAlpha(dayText, alpha);
+        SetUIAlpha(additionalText, alpha);
+    }
+
+    private void SetUIAlpha(Graphic uiElement, float alpha)
+    {
+        if (uiElement != null)
+        {
+            Color color = uiElement.color;
+            color.a = alpha;
+            uiElement.color = color;
+        }
+    }
+
     private void OnImageClicked()
     {
-        if (currentDay >= maxDays) return;
+        if (currentDay >= maxDays || areHiddenUIsVisible) return;
 
         currentDay++;
         UpdateDayText();
@@ -215,58 +474,27 @@ public class DayCounter : MonoBehaviour
         }
     }
 
-    // 禁用点击交互并移除悬停效果
     private void DisableImageInteraction()
     {
         if (imageButton != null)
         {
             imageButton.interactable = false;
+
+            // 如果正在悬停，立即变暗
+            if (isHovering.ContainsKey(clickableImage) && isHovering[clickableImage])
+            {
+                SetUIDark(clickableImage);
+                isHovering[clickableImage] = false;
+            }
         }
 
-        // 移除悬停事件
-        RemoveHoverEventsFromClickableImage();
-
         // 设置禁用状态的外观
-        Color disabledColor = GetModifiedColor(clickableImageOriginalColor, clickableImageDarkness);
-        disabledColor.a = 0.5f; // 半透明表示禁用
+        Color disabledColor = GetModifiedColor(originalColors[clickableImage], normalDarkness);
+        disabledColor.a = 0.5f;
         if (clickableImage != null)
         {
             clickableImage.color = disabledColor;
         }
-
-        Debug.Log("已达到最大天数：" + maxDays + "，Image已禁用点击功能和悬停效果");
-    }
-
-    // 启用点击交互并恢复悬停效果
-    private void EnableImageInteraction()
-    {
-        if (imageButton != null)
-        {
-            imageButton.interactable = true;
-        }
-
-        // 恢复悬停事件
-        RestoreHoverEventsToClickableImage();
-
-        // 恢复正常外观
-        if (clickableImage != null)
-        {
-            clickableImage.color = GetModifiedColor(clickableImageOriginalColor, clickableImageDarkness);
-        }
-    }
-
-    private void OnCloseButtonClicked()
-    {
-        HideAllUIElements();
-    }
-
-    private void HideAllUIElements()
-    {
-        SetUIVisibility(clickableImage, false);
-        SetUIVisibility(closeButtonImage, false);
-        SetUIVisibility(additionalImage, false);
-        SetUIVisibility(dayText, false);
-        SetUIVisibility(additionalText, false);
     }
 
     public void ShowAllUIElements()
@@ -277,18 +505,8 @@ public class DayCounter : MonoBehaviour
         SetUIVisibility(dayText, true);
         SetUIVisibility(additionalText, true);
 
-        // 根据当前天数决定是否启用交互
-        if (currentDay >= maxDays)
-        {
-            DisableImageInteraction();
-        }
-        else
-        {
-            EnableImageInteraction();
-        }
-
-        // 显示时恢复变暗状态
-        SetClickableImageDark();
+        SetMainUIInteractable(true);
+        SetAllUIsDark();
     }
 
     private void SetUIVisibility(Behaviour uiElement, bool visible)
@@ -306,37 +524,50 @@ public class DayCounter : MonoBehaviour
         currentDay = 1;
         UpdateDayText();
         ShowAllUIElements();
+        SetHiddenUIsVisible(false);
+        areHiddenUIsVisible = false;
+        wasClickableImageDisabledBeforeClose = false;
+
+        // 重置悬停状态
+        foreach (var key in new List<Graphic>(isHovering.Keys))
+        {
+            isHovering[key] = false;
+        }
     }
 
     // 公共方法
-    public void SetClickableImageBrightness(float brightness)
+    public void SetTargetScene(string sceneName)
     {
-        clickableImageBrightness = Mathf.Clamp(brightness, 1f, 2f);
-        if (isHoveringClickableImage && clickableImage != null && currentDay < maxDays)
+        targetSceneName = sceneName;
+    }
+
+    public void SetHoverBrightness(float brightness)
+    {
+        hoverBrightness = Mathf.Clamp(brightness, 1f, 2f);
+        // 更新所有正在悬停且可交互的UI
+        foreach (var kvp in isHovering)
         {
-            SetClickableImageBright();
+            if (kvp.Value && kvp.Key != null && IsUIInteractable(kvp.Key))
+            {
+                SetUIBright(kvp.Key);
+            }
         }
     }
 
-    public void SetClickableImageDarkness(float darkness)
+    public void SetNormalDarkness(float darkness)
     {
-        clickableImageDarkness = Mathf.Clamp(darkness, 0.5f, 1f);
-        if (!isHoveringClickableImage && clickableImage != null && currentDay < maxDays)
-        {
-            SetClickableImageDark();
-        }
+        normalDarkness = Mathf.Clamp(darkness, 0.5f, 1f);
+        // 更新所有UI
+        SetAllUIsDark();
     }
 
-    public int GetCurrentDay() => currentDay;
-
-    // 检查是否已达到最大天数
-    public bool IsMaxDayReached() => currentDay >= maxDays;
+    public bool AreHiddenUIsVisible() => areHiddenUIsVisible;
 
     private void OnValidate()
     {
         maxDays = Mathf.Max(2, maxDays);
         colorChangeDuration = Mathf.Max(0f, colorChangeDuration);
-        clickableImageBrightness = Mathf.Clamp(clickableImageBrightness, 1f, 2f);
-        clickableImageDarkness = Mathf.Clamp(clickableImageDarkness, 0.5f, 1f);
+        hoverBrightness = Mathf.Clamp(hoverBrightness, 1f, 2f);
+        normalDarkness = Mathf.Clamp(normalDarkness, 0.5f, 1f);
     }
 }
