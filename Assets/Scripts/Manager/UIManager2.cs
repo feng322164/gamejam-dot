@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
 
-public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class DayCounter : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private Image clickableImage;
@@ -13,8 +13,10 @@ public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     [SerializeField] private TextMeshProUGUI additionalText;
 
     [Header("Hover Settings")]
-    [SerializeField] private Color closeButtonHoverColor = new Color(1f, 0.8f, 0.8f, 1f); // 鼠标悬停时关闭按钮的颜色
-    [SerializeField] private float colorChangeDuration = 0.2f; // 颜色变化持续时间
+    [SerializeField] private Color closeButtonHoverColor = new Color(1f, 0.8f, 0.8f, 1f);
+    [SerializeField] private float clickableImageBrightness = 1.3f; // 悬停时变亮倍数
+    [SerializeField] private float clickableImageDarkness = 0.8f;   // 正常时变暗倍数
+    [SerializeField] private float colorChangeDuration = 0.2f;
 
     [Header("Other Settings")]
     [SerializeField] private int maxDays = 6;
@@ -24,18 +26,21 @@ public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     private Button imageButton;
     private Button closeButton;
     private Button additionalTextButton;
-    private Color closeButtonOriginalColor; // 关闭按钮的原始颜色
+    private Color clickableImageOriginalColor;
     private bool isHoveringAdditionalText = false;
+    private bool isHoveringClickableImage = false;
+    private EventTrigger clickableImageEventTrigger; // 保存事件触发器引用
 
     void Start()
     {
         InitializeComponents();
         UpdateDayText();
 
-        // 保存关闭按钮的原始颜色
-        if (closeButtonImage != null)
+        if (clickableImage != null)
         {
-            closeButtonOriginalColor = closeButtonImage.color;
+            clickableImageOriginalColor = clickableImage.color;
+            // 初始状态设为变暗
+            SetClickableImageDark();
         }
     }
 
@@ -52,13 +57,12 @@ public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
             imageButton.onClick.RemoveAllListeners();
             imageButton.onClick.AddListener(OnImageClicked);
-        }
-        else
-        {
-            Debug.LogError("Clickable Image is not assigned!");
+
+            // 添加悬停事件
+            AddHoverEventsToClickableImage();
         }
 
-        // 初始化关闭按钮Image
+        // 初始化关闭按钮
         if (closeButtonImage != null)
         {
             closeButton = closeButtonImage.GetComponent<Button>();
@@ -66,16 +70,10 @@ public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             {
                 closeButton = closeButtonImage.gameObject.AddComponent<Button>();
             }
-
-            closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(OnCloseButtonClicked);
         }
-        else
-        {
-            Debug.LogError("Close Button Image is not assigned!");
-        }
 
-        // 初始化第二个文本的点击功能
+        // 初始化第二个文本
         if (additionalText != null)
         {
             additionalTextButton = additionalText.GetComponent<Button>();
@@ -83,211 +81,141 @@ public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             {
                 additionalTextButton = additionalText.gameObject.AddComponent<Button>();
             }
-
-            additionalTextButton.onClick.RemoveAllListeners();
             additionalTextButton.onClick.AddListener(OnCloseButtonClicked);
 
-            // 为第二个文本添加事件触发器来处理鼠标悬停
-            AddEventTriggerToAdditionalText();
-        }
-        else
-        {
-            Debug.LogWarning("Additional TextMeshPro is not assigned, but it's optional.");
-        }
-
-        if (dayText == null)
-        {
-            Debug.LogError("Day TextMeshPro is not assigned!");
-        }
-
-        if (additionalImage == null)
-        {
-            Debug.LogWarning("Additional Image is not assigned, but it's optional.");
+            AddHoverEventsToImage(additionalText, OnPointerEnterAdditionalText, OnPointerExitAdditionalText);
         }
     }
 
-    // 为第二个文本添加事件触发器
-    private void AddEventTriggerToAdditionalText()
+    // 为clickable image添加悬停事件
+    private void AddHoverEventsToClickableImage()
     {
-        EventTrigger eventTrigger = additionalText.GetComponent<EventTrigger>();
-        if (eventTrigger == null)
+        clickableImageEventTrigger = clickableImage.GetComponent<EventTrigger>();
+        if (clickableImageEventTrigger == null)
         {
-            eventTrigger = additionalText.gameObject.AddComponent<EventTrigger>();
+            clickableImageEventTrigger = clickableImage.gameObject.AddComponent<EventTrigger>();
         }
 
-        // 清除现有的事件
+        // 添加悬停事件
+        AddHoverEventsToEventTrigger(clickableImageEventTrigger, OnPointerEnterClickableImage, OnPointerExitClickableImage);
+    }
+
+    // 为其他UI元素添加悬停事件
+    private void AddHoverEventsToImage(Graphic uiElement, UnityEngine.Events.UnityAction<PointerEventData> enterAction,
+                                     UnityEngine.Events.UnityAction<PointerEventData> exitAction)
+    {
+        EventTrigger eventTrigger = uiElement.GetComponent<EventTrigger>();
+        if (eventTrigger == null) eventTrigger = uiElement.gameObject.AddComponent<EventTrigger>();
+
+        AddHoverEventsToEventTrigger(eventTrigger, enterAction, exitAction);
+    }
+
+    // 为事件触发器添加悬停事件
+    private void AddHoverEventsToEventTrigger(EventTrigger eventTrigger, UnityEngine.Events.UnityAction<PointerEventData> enterAction,
+                                            UnityEngine.Events.UnityAction<PointerEventData> exitAction)
+    {
         eventTrigger.triggers.Clear();
 
-        // 添加鼠标进入事件
-        EventTrigger.Entry pointerEnterEntry = new EventTrigger.Entry();
-        pointerEnterEntry.eventID = EventTriggerType.PointerEnter;
-        pointerEnterEntry.callback.AddListener((data) => { OnPointerEnterAdditionalText((PointerEventData)data); });
-        eventTrigger.triggers.Add(pointerEnterEntry);
+        EventTrigger.Entry enterEntry = new EventTrigger.Entry();
+        enterEntry.eventID = EventTriggerType.PointerEnter;
+        enterEntry.callback.AddListener((data) => enterAction((PointerEventData)data));
+        eventTrigger.triggers.Add(enterEntry);
 
-        // 添加鼠标离开事件
-        EventTrigger.Entry pointerExitEntry = new EventTrigger.Entry();
-        pointerExitEntry.eventID = EventTriggerType.PointerExit;
-        pointerExitEntry.callback.AddListener((data) => { OnPointerExitAdditionalText((PointerEventData)data); });
-        eventTrigger.triggers.Add(pointerExitEntry);
+        EventTrigger.Entry exitEntry = new EventTrigger.Entry();
+        exitEntry.eventID = EventTriggerType.PointerExit;
+        exitEntry.callback.AddListener((data) => exitAction((PointerEventData)data));
+        eventTrigger.triggers.Add(exitEntry);
     }
 
-    // 鼠标进入第二个文本时的处理
-    public void OnPointerEnter(PointerEventData eventData)
+    // 移除clickable image的悬停事件
+    private void RemoveHoverEventsFromClickableImage()
     {
-        // 这个接口方法是为了实现IPointerEnterHandler，但我们会用自定义方法
+        if (clickableImageEventTrigger != null)
+        {
+            clickableImageEventTrigger.triggers.Clear();
+        }
     }
 
-    public void OnPointerExit(PointerEventData eventData)
+    // 恢复clickable image的悬停事件
+    private void RestoreHoverEventsToClickableImage()
     {
-        // 这个接口方法是为了实现IPointerExitHandler，但我们会用自定义方法
+        if (clickableImageEventTrigger != null)
+        {
+            AddHoverEventsToEventTrigger(clickableImageEventTrigger, OnPointerEnterClickableImage, OnPointerExitClickableImage);
+        }
+    }
+
+    private void OnPointerEnterClickableImage(PointerEventData eventData)
+    {
+        isHoveringClickableImage = true;
+        SetClickableImageBright(); // 鼠标进入时变亮
+    }
+
+    private void OnPointerExitClickableImage(PointerEventData eventData)
+    {
+        isHoveringClickableImage = false;
+        SetClickableImageDark(); // 鼠标离开时变暗
     }
 
     private void OnPointerEnterAdditionalText(PointerEventData eventData)
     {
         isHoveringAdditionalText = true;
-        ChangeCloseButtonColor(closeButtonHoverColor);
+        if (closeButtonImage != null)
+            closeButtonImage.CrossFadeColor(closeButtonHoverColor, colorChangeDuration, true, true);
     }
 
     private void OnPointerExitAdditionalText(PointerEventData eventData)
     {
         isHoveringAdditionalText = false;
-        ChangeCloseButtonColor(closeButtonOriginalColor);
+        if (closeButtonImage != null)
+            closeButtonImage.CrossFadeColor(Color.white, colorChangeDuration, true, true);
     }
 
-    // 改变关闭按钮颜色（带平滑过渡）
-    private void ChangeCloseButtonColor(Color targetColor)
+    // 设置clickable image变亮
+    private void SetClickableImageBright()
     {
-        if (closeButtonImage != null)
+        if (clickableImage != null && clickableImage.gameObject.activeInHierarchy)
         {
-            // 使用LeanTween实现平滑颜色过渡（如果没有LeanTween，可以使用协程）
-            if (closeButtonImage.gameObject.activeInHierarchy)
-            {
-                closeButtonImage.CrossFadeColor(targetColor, colorChangeDuration, true, true);
-            }
-            else
-            {
-                closeButtonImage.color = targetColor;
-            }
+            Color brightColor = GetModifiedColor(clickableImageOriginalColor, clickableImageBrightness);
+            clickableImage.CrossFadeColor(brightColor, colorChangeDuration, true, true);
         }
     }
 
-    // 点击主Image时的处理
+    // 设置clickable image变暗
+    private void SetClickableImageDark()
+    {
+        if (clickableImage != null && clickableImage.gameObject.activeInHierarchy)
+        {
+            Color darkColor = GetModifiedColor(clickableImageOriginalColor, clickableImageDarkness);
+            clickableImage.CrossFadeColor(darkColor, colorChangeDuration, true, true);
+        }
+    }
+
+    // 获取修改后的颜色（亮度/暗度调整）
+    private Color GetModifiedColor(Color baseColor, float multiplier)
+    {
+        return new Color(
+            Mathf.Clamp01(baseColor.r * multiplier),
+            Mathf.Clamp01(baseColor.g * multiplier),
+            Mathf.Clamp01(baseColor.b * multiplier),
+            baseColor.a
+        );
+    }
+
     private void OnImageClicked()
     {
         if (currentDay >= maxDays) return;
 
-        // 增加天数
         currentDay++;
-
-        // 更新文本显示
         UpdateDayText();
 
-        // 检查是否达到最大天数
         if (currentDay >= maxDays)
         {
             DisableImageInteraction();
-            Debug.Log("已达到最大天数：" + maxDays + "，Image已禁用交互");
         }
     }
 
-    // 点击关闭按钮时的处理
-    private void OnCloseButtonClicked()
-    {
-        HideAllUIElements();
-        Debug.Log("所有UI元素已隐藏（由关闭按钮或第二个文本触发）");
-    }
-
-    // 隐藏所有UI元素
-    private void HideAllUIElements()
-    {
-        // 隐藏clickableImage
-        if (clickableImage != null)
-        {
-            clickableImage.gameObject.SetActive(false);
-        }
-
-        // 隐藏closeButtonImage
-        if (closeButtonImage != null)
-        {
-            closeButtonImage.gameObject.SetActive(false);
-        }
-
-        // 隐藏additionalImage
-        if (additionalImage != null)
-        {
-            additionalImage.gameObject.SetActive(false);
-        }
-
-        // 隐藏dayText
-        if (dayText != null)
-        {
-            dayText.gameObject.SetActive(false);
-        }
-
-        // 隐藏additionalText
-        if (additionalText != null)
-        {
-            additionalText.gameObject.SetActive(false);
-        }
-    }
-
-    // 显示所有UI元素（可选功能）
-    public void ShowAllUIElements()
-    {
-        if (clickableImage != null)
-        {
-            clickableImage.gameObject.SetActive(true);
-        }
-
-        if (closeButtonImage != null)
-        {
-            closeButtonImage.gameObject.SetActive(true);
-            // 恢复原始颜色
-            closeButtonImage.color = closeButtonOriginalColor;
-        }
-
-        if (additionalImage != null)
-        {
-            additionalImage.gameObject.SetActive(true);
-        }
-
-        if (dayText != null)
-        {
-            dayText.gameObject.SetActive(true);
-        }
-
-        if (additionalText != null)
-        {
-            additionalText.gameObject.SetActive(true);
-        }
-
-        // 重置交互状态
-        if (imageButton != null && currentDay < maxDays)
-        {
-            imageButton.interactable = true;
-        }
-
-        // 恢复Image外观
-        if (clickableImage != null && currentDay < maxDays)
-        {
-            Color enabledColor = clickableImage.color;
-            enabledColor.a = 1f;
-            clickableImage.color = enabledColor;
-        }
-
-        isHoveringAdditionalText = false;
-    }
-
-    // 更新天数文本
-    private void UpdateDayText()
-    {
-        if (dayText != null)
-        {
-            dayText.text = textPrefix + currentDay;
-        }
-    }
-
-    // 禁用Image的交互
+    // 禁用点击交互并移除悬停效果
     private void DisableImageInteraction()
     {
         if (imageButton != null)
@@ -295,188 +223,120 @@ public class DayCounter : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             imageButton.interactable = false;
         }
 
-        // 可选：改变Image的外观表示已禁用
+        // 移除悬停事件
+        RemoveHoverEventsFromClickableImage();
+
+        // 设置禁用状态的外观
+        Color disabledColor = GetModifiedColor(clickableImageOriginalColor, clickableImageDarkness);
+        disabledColor.a = 0.5f; // 半透明表示禁用
         if (clickableImage != null)
         {
-            Color disabledColor = clickableImage.color;
-            disabledColor.a = 0.5f; // 半透明表示禁用
             clickableImage.color = disabledColor;
         }
+
+        Debug.Log("已达到最大天数：" + maxDays + "，Image已禁用点击功能和悬停效果");
     }
 
-    // 重置天数计数和显示状态（可选功能）
-    public void ResetCounter()
+    // 启用点击交互并恢复悬停效果
+    private void EnableImageInteraction()
     {
-        currentDay = 1;
-        UpdateDayText();
-
-        // 重新启用Image交互
         if (imageButton != null)
         {
             imageButton.interactable = true;
         }
 
-        // 恢复Image外观
+        // 恢复悬停事件
+        RestoreHoverEventsToClickableImage();
+
+        // 恢复正常外观
         if (clickableImage != null)
         {
-            Color enabledColor = clickableImage.color;
-            enabledColor.a = 1f; // 完全不透明
-            clickableImage.color = enabledColor;
+            clickableImage.color = GetModifiedColor(clickableImageOriginalColor, clickableImageDarkness);
+        }
+    }
+
+    private void OnCloseButtonClicked()
+    {
+        HideAllUIElements();
+    }
+
+    private void HideAllUIElements()
+    {
+        SetUIVisibility(clickableImage, false);
+        SetUIVisibility(closeButtonImage, false);
+        SetUIVisibility(additionalImage, false);
+        SetUIVisibility(dayText, false);
+        SetUIVisibility(additionalText, false);
+    }
+
+    public void ShowAllUIElements()
+    {
+        SetUIVisibility(clickableImage, true);
+        SetUIVisibility(closeButtonImage, true);
+        SetUIVisibility(additionalImage, true);
+        SetUIVisibility(dayText, true);
+        SetUIVisibility(additionalText, true);
+
+        // 根据当前天数决定是否启用交互
+        if (currentDay >= maxDays)
+        {
+            DisableImageInteraction();
+        }
+        else
+        {
+            EnableImageInteraction();
         }
 
-        // 确保所有UI元素显示
-        ShowAllUIElements();
-
-        Debug.Log("天数计数器和UI显示已重置");
+        // 显示时恢复变暗状态
+        SetClickableImageDark();
     }
 
-    // 获取当前天数（只读）
-    public int GetCurrentDay()
+    private void SetUIVisibility(Behaviour uiElement, bool visible)
     {
-        return currentDay;
+        if (uiElement != null) uiElement.gameObject.SetActive(visible);
     }
 
-    // 在Inspector中修改值时进行验证
+    private void UpdateDayText()
+    {
+        if (dayText != null) dayText.text = textPrefix + currentDay;
+    }
+
+    public void ResetCounter()
+    {
+        currentDay = 1;
+        UpdateDayText();
+        ShowAllUIElements();
+    }
+
+    // 公共方法
+    public void SetClickableImageBrightness(float brightness)
+    {
+        clickableImageBrightness = Mathf.Clamp(brightness, 1f, 2f);
+        if (isHoveringClickableImage && clickableImage != null && currentDay < maxDays)
+        {
+            SetClickableImageBright();
+        }
+    }
+
+    public void SetClickableImageDarkness(float darkness)
+    {
+        clickableImageDarkness = Mathf.Clamp(darkness, 0.5f, 1f);
+        if (!isHoveringClickableImage && clickableImage != null && currentDay < maxDays)
+        {
+            SetClickableImageDark();
+        }
+    }
+
+    public int GetCurrentDay() => currentDay;
+
+    // 检查是否已达到最大天数
+    public bool IsMaxDayReached() => currentDay >= maxDays;
+
     private void OnValidate()
     {
-        maxDays = Mathf.Max(2, maxDays); // 至少需要2天
+        maxDays = Mathf.Max(2, maxDays);
         colorChangeDuration = Mathf.Max(0f, colorChangeDuration);
-    }
-
-    // 手动设置天数（可选，用于测试）
-    public void SetCurrentDay(int day)
-    {
-        if (day >= 1 && day <= maxDays)
-        {
-            currentDay = day;
-            UpdateDayText();
-
-            // 如果设置的天数达到最大值，禁用交互
-            if (currentDay >= maxDays)
-            {
-                DisableImageInteraction();
-            }
-            else if (imageButton != null)
-            {
-                imageButton.interactable = true;
-            }
-        }
-    }
-
-    // 设置关闭按钮悬停颜色
-    public void SetCloseButtonHoverColor(Color color)
-    {
-        closeButtonHoverColor = color;
-        if (isHoveringAdditionalText)
-        {
-            ChangeCloseButtonColor(closeButtonHoverColor);
-        }
-    }
-
-    // 设置颜色变化持续时间
-    public void SetColorChangeDuration(float duration)
-    {
-        colorChangeDuration = Mathf.Max(0f, duration);
-    }
-
-    // 设置TextMeshPro的字体样式（可选扩展功能）
-    public void SetTextStyle(TMP_FontAsset font, float fontSize, Color color)
-    {
-        if (dayText != null)
-        {
-            if (font != null) dayText.font = font;
-            dayText.fontSize = fontSize;
-            dayText.color = color;
-        }
-    }
-
-    // 设置第二个TextMeshPro的字体样式
-    public void SetAdditionalTextStyle(TMP_FontAsset font, float fontSize, Color color)
-    {
-        if (additionalText != null)
-        {
-            if (font != null) additionalText.font = font;
-            additionalText.fontSize = fontSize;
-            additionalText.color = color;
-        }
-    }
-
-    // 设置第二个TextMeshPro的内容
-    public void SetAdditionalText(string text)
-    {
-        if (additionalText != null)
-        {
-            additionalText.text = text;
-        }
-    }
-
-    // 设置第二个UI Image的精灵
-    public void SetAdditionalImageSprite(Sprite sprite)
-    {
-        if (additionalImage != null && sprite != null)
-        {
-            additionalImage.sprite = sprite;
-        }
-    }
-
-    // 设置第二个UI Image的颜色
-    public void SetAdditionalImageColor(Color color)
-    {
-        if (additionalImage != null)
-        {
-            additionalImage.color = color;
-        }
-    }
-
-    // 设置文本前缀
-    public void SetTextPrefix(string prefix)
-    {
-        textPrefix = prefix;
-        UpdateDayText();
-    }
-
-    // 启用/禁用第二个文本的点击功能
-    public void SetAdditionalTextClickable(bool clickable)
-    {
-        if (additionalTextButton != null)
-        {
-            additionalTextButton.interactable = clickable;
-        }
-    }
-
-    // 检查UI元素是否可见
-    public bool AreUIElementsVisible()
-    {
-        bool clickableVisible = clickableImage != null && clickableImage.gameObject.activeInHierarchy;
-        bool closeButtonVisible = closeButtonImage != null && closeButtonImage.gameObject.activeInHierarchy;
-        bool additionalImageVisible = additionalImage != null && additionalImage.gameObject.activeInHierarchy;
-        bool dayTextVisible = dayText != null && dayText.gameObject.activeInHierarchy;
-        bool additionalTextVisible = additionalText != null && additionalText.gameObject.activeInHierarchy;
-
-        return clickableVisible && closeButtonVisible && additionalImageVisible && dayTextVisible && additionalTextVisible;
-    }
-
-    // 单独显示/隐藏第二个UI Image（可选功能）
-    public void SetAdditionalImageVisible(bool visible)
-    {
-        if (additionalImage != null)
-        {
-            additionalImage.gameObject.SetActive(visible);
-        }
-    }
-
-    // 单独显示/隐藏第二个TextMeshPro（可选功能）
-    public void SetAdditionalTextVisible(bool visible)
-    {
-        if (additionalText != null)
-        {
-            additionalText.gameObject.SetActive(visible);
-        }
-    }
-
-    // 检查是否正在悬停第二个文本
-    public bool IsHoveringAdditionalText()
-    {
-        return isHoveringAdditionalText;
+        clickableImageBrightness = Mathf.Clamp(clickableImageBrightness, 1f, 2f);
+        clickableImageDarkness = Mathf.Clamp(clickableImageDarkness, 0.5f, 1f);
     }
 }
