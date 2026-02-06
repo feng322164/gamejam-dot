@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Project副本.slnx"
+    "dotnet.defaultSolution": "dot-t.slnx"
 }

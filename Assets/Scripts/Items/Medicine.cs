@@ -8,16 +8,23 @@ public class Medicine
     [SerializeField] string medicineName;
     [SerializeField] string medicineDetail;
     [SerializeField] Sprite medicineSprite;
-    [Header("精神")]
-    [SerializeField] int mindWound;
+
+    [Header("内伤")]
+    [SerializeField] int insideWound;
     [Header("外伤")]
     [SerializeField] int outsideWound;
-    [Header("内伤")]
-    [SerializeField] int internalWound;
+    [Header("精神")]
+    [SerializeField] int mindWound;
+    
+
+    //detail
     public string getMedicineName => medicineName;
     public string getMedicineDetail => medicineDetail;
-    public int getMindWound => mindWound;
-    public int getOutsideWound => outsideWound;
-    public int getInternalWound => internalWound;
     public Sprite getMedicineSprite => medicineSprite;
+
+    //wound values
+    public int getInsideWound => insideWound;
+    public int getOutsideWound => outsideWound;
+    public int getMindWound => mindWound;
+    
 }
