@@ -2,20 +2,20 @@ using UnityEngine;
 
 public class ExampleClass : MonoBehaviour
 {
-    private int patients = 2; // µ±Ìì×Ü²¡ÈËÊı
-    private int patientnow = 3;//µ±ÌìÊ£Óà²¡ÈËÊı
-    // ¹«¿ª·½·¨£¬ÓÃÓÚ¸üĞÂÒ»ÌìµÄ×Ü²¡ÈËÊıÁ¿²¢³õÊ¼»¯ÕâÒ»ÌìµÄÊ£Óà²¡ÈËÊıÄ¿
+    private int patients = 2; // å½“å¤©æ€»ç—…äººæ•°
+    private int patientnow = 3;//å½“å¤©å‰©ä½™ç—…äººæ•°
+    // å…¬å¼€æ–¹æ³•ï¼Œç”¨äºæ›´æ–°ä¸€å¤©çš„æ€»ç—…äººæ•°é‡å¹¶åˆå§‹åŒ–è¿™ä¸€å¤©çš„å‰©ä½™ç—…äººæ•°ç›®
     public void PatientsToday()
     {
         patients++;
-        Debug.Log($"ÕâÒ»Ìì×ÜµÄ²¡ÈËÊı: {patients}");
+        Debug.Log($"è¿™ä¸€å¤©æ€»çš„ç—…äººæ•°: {patients}");
         patientnow = patients;
     }
-    //¹«¿ª·½·¨£¬ÓÃÓÚ¸üĞÂÕâÒ»ÌìÊ£ÓàµÄ²¡ÈËÊıÄ¿
+    //å…¬å¼€æ–¹æ³•ï¼Œç”¨äºæ›´æ–°è¿™ä¸€å¤©å‰©ä½™çš„ç—…äººæ•°ç›®
     public void PatientOver()
     {
         patientnow--;
-        Debug.Log($"ÕâÒ»ÌìÊ£ÏÂµÄ²¡ÈËÊı: {patients}");
+        Debug.Log($"è¿™ä¸€å¤©å‰©ä¸‹çš„ç—…äººæ•°: {patients}");
     }
-    //¹«¿ª·½·¨
+    //å…¬å¼€æ–¹æ³•
 }

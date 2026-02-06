@@ -20,4 +20,10 @@ public class Medicine
     public int getOutsideWound => outsideWound;
     public int getInternalWound => internalWound;
     public Sprite getMedicineSprite => medicineSprite;
+    public void ChangeInternalWound(int wound)
+    { internalWound = wound; }
+    public void ChangeOutsideWound(int wound) { outsideWound = wound; }
+    public void ChangeName(string name) {  medicineName = name; }
+    public void ChangeDetail() { medicineDetail = "外伤" + outsideWound + "\n" + "内伤" + internalWound + "\n"; }
+    public void ChangeSprite(Sprite sprite) { medicineSprite = sprite; }
 }

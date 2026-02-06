@@ -14,7 +14,9 @@ public class HerbInventory : MonoBehaviour
     [SerializeField]TextMeshProUGUI herbName;
     [SerializeField]TextMeshProUGUI herbDetail;
     [SerializeField]List<TextMeshProUGUI> textMeshProUGUIs;//传入按钮的文本
-    int lastIndex = -1;
+    [SerializeField] List<Button> assistHerbButtons;
+    [SerializeField] List<TextMeshProUGUI> assistHerbtextMeshProUGUIs;
+    int lastIndex = -1,assLastIndex = -1;
     void OnEnable()
     {
         EventManager.HerbInventoryUpdateEvent += UpdateUI;
@@ -30,6 +32,11 @@ public class HerbInventory : MonoBehaviour
         {
             buttons[i].image.sprite = inventoryManager.GetHerb(i).getHerbSprite;
             textMeshProUGUIs[i].text = inventoryManager.GetHerb(i).getHerbName;
+        }
+        for (int i = 0; i < 6; i++) 
+        {
+            assistHerbButtons[i].image.sprite = inventoryManager.GetAssistHerb(i).getHerbSprite;
+            assistHerbtextMeshProUGUIs[i].text = inventoryManager.GetAssistHerb(i).getHerbName;
         }
     }//仓库更新的时候更新UI
 
@@ -47,10 +54,7 @@ public class HerbInventory : MonoBehaviour
             detailUI.gameObject.SetActive(false);
         }
     }//当Z键按下后
-    public void OnSeleckedButton()
-    {
-        
-    }
+
     public void OnClickButton(int i)
     {
         if(lastIndex != i)
@@ -59,22 +63,34 @@ public class HerbInventory : MonoBehaviour
             herbName.text = inventoryManager.GetHerb(i).getHerbName;
             herbDetail.text = inventoryManager.GetHerb(i).getHerbDetail;
             lastIndex = i;
+            
         }
         else
         {
             detailUI.gameObject.SetActive(false);
-
+            EventManager.CallSeleckedMainHerb(i);
             lastIndex = -1;
         }
 
     }//点击，选中的逻辑
 
-    private void OnButtonHoverEnter(int buttonIndex)
+    public void OnClickAssistHerbButton(int i)
     {
-        Debug.Log("jru");
-    }
-    private void OnButtonHoverExit(int buttonIndex)
-    {
+        if (assLastIndex != i)
+        {
+            detailUI.gameObject.SetActive(true);
+            herbName.text = inventoryManager.GetAssistHerb(i).getHerbName;
+            herbDetail.text = inventoryManager.GetAssistHerb(i).getHerbDetail;
+            assLastIndex = i;
 
-    }
+        }
+        else
+        {
+            detailUI.gameObject.SetActive(false);
+            if(inventoryManager.GetAssistHerb(i).getHerbName != "空")
+                EventManager.CallSeleckedAssistHerb(i);
+            assLastIndex = -1;
+        }
+
+    }//点击，选中的逻辑
 }

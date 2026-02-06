@@ -10,24 +10,24 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b6334353f3ec80a42a78c55c02f7df40, type: 3}
-  m_Name: HerbsData
+  m_Name: AssestHerb
   m_EditorClassIdentifier: 
   herbList:
   - herbName: "\u7A7A"
     herbDetail: "\u65E0"
-    herbSprite: {fileID: -5177388603050735206, guid: 71ebafeef3c03457483266a33ab2b270, type: 3}
+    herbSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
     mindWound: 0
     outsideWound: 0
     internalWound: 0
-  - herbName: "\u7EA2\u8272\u8349"
-    herbDetail: "\u5F88\u7EA2\u5F88\u7EA2"
+  - herbName: "\u84DD\u8272"
+    herbDetail: 111
     herbSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-    mindWound: 5
-    outsideWound: 5
-    internalWound: 5
-  - herbName: "\u84DD\u8272\u8349"
-    herbDetail: "\u5F88\u84DD\u5F88\u84DD"
-    herbSprite: {fileID: -2413806693520163455, guid: ebe73ca9363db456bacf42c025bb4847, type: 3}
-    mindWound: 5
-    outsideWound: 5
-    internalWound: 5
+    mindWound: 1
+    outsideWound: 1
+    internalWound: 1
+  - herbName: "\u7D2B\u8272"
+    herbDetail: 222
+    herbSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    mindWound: 2
+    outsideWound: 2
+    internalWound: 2

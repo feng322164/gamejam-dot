@@ -48,10 +48,7 @@ public class MedicineInventory : MonoBehaviour
             detailUI.gameObject.SetActive(false);
         }
     }//当Z键按下后
-    public void OnSeleckedButton()
-    {
-        
-    }
+
     public void OnClickButton(int i)
     {
         if(lastIndex != i)
@@ -64,18 +61,11 @@ public class MedicineInventory : MonoBehaviour
         else
         {
             detailUI.gameObject.SetActive(false);
-
+            if (inventoryManager.GetMedicine(i).getMedicineName != "空")
+                EventManager.CallSeleckedMedicine(i);
             lastIndex = -1;
         }
 
     }//点击，选中的逻辑
 
-    private void OnButtonHoverEnter(int buttonIndex)
-    {
-        Debug.Log("jru");
-    }
-    private void OnButtonHoverExit(int buttonIndex)
-    {
-
-    }
 }

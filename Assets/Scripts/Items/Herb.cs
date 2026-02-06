@@ -20,4 +20,10 @@ public class Herb
     public int getOutsideWound => outsideWound;
     public int getInternalWound => internalWound;
     public Sprite getHerbSprite => herbSprite;
+    public void ChangeInternalWound(int wound)
+        { internalWound = wound; }
+    public void ChangeOutsideWound(int wound) { outsideWound = wound; }
+    public void ChangeName(string name) { herbName = name; }
+    public void ChangeDetail() { herbDetail = "外伤" + outsideWound + "\n" + "内伤" + internalWound + "\n"; }
+    public void ChangeSprite(Sprite sprite) { herbSprite = sprite; }
 }
