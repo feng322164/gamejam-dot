@@ -56,9 +56,6 @@
         "temp/": true,
         "Temp/": true
     },
-<<<<<<< HEAD
+    "Doctor.slnx=======dotnet.defaultSolution": "dot-t.slnx>>>>>>>origin/仓库系统",
     "dotnet.defaultSolution": "Doctor.slnx"
-=======
-    "dotnet.defaultSolution": "dot-t.slnx"
->>>>>>> origin/仓库系统
 }

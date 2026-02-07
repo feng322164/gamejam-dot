@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ExampleClass : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     private int patients = 2; // 当天总病人数
     private int patientnow = 3;//当天剩余病人数
