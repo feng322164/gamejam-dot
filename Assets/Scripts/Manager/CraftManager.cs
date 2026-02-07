@@ -110,7 +110,7 @@ public class CraftManager : MonoBehaviour
                 assistHerbToCombin[i] = assistHerbs.getHerbList[0];
             }
             medicineReadyToCombin.ChangeOutsideWound(medicineOutWound + medicineReadyToCombin.getOutsideWound);
-            medicineReadyToCombin.ChangeInternalWound(medicineInternalWound + medicineReadyToCombin.getInternalWound);
+            medicineReadyToCombin.ChangeInternalWound(medicineInternalWound + medicineReadyToCombin.getInsideWound);
             medicineReadyToCombin.ChangeDetail();
             inventoryManager.AddComebineMedicine(medicineReadyToCombin);
             medicineReadyToCombin = medicineExamples.getMedicinesList[0];
