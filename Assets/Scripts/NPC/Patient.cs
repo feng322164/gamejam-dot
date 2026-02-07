@@ -8,7 +8,7 @@ public class Patient : MonoBehaviour
     [Header("text Display")]
     public TextMeshProUGUI AC_Text;
     public TextMeshProUGUI BC_Text;
-
+    public TextMeshProUGUI MC_Text;
     public TextMeshProUGUI Name_Text;
 
     [Header("Illness Data")]
@@ -20,7 +20,6 @@ public class Patient : MonoBehaviour
     public float insidewoundnum = 0f;
     public float outsidewoundnum = 0f;
     public float spiritwoundnum = 0f;
-
     private void Start()
     {
         // 从 IllnessSQ 中随机获取一个疾病
@@ -51,6 +50,8 @@ public class Patient : MonoBehaviour
             BC_Text.text = $"外伤:{outsidewoundnum}";
         if (Name_Text != null && currentIllness != null)
             Name_Text.text = $"{currentIllness.getIllnessName}";
+        if(MC_Text != null)
+            MC_Text.text = $"心理伤害：{spiritwoundnum}";
     }
 
     // 应用药剂，当某个数值被减到小于零时拒绝给药

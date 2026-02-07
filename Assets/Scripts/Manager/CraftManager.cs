@@ -74,6 +74,7 @@ public class CraftManager : MonoBehaviour
         int count = 0;
         int medicineOutWound=0;
         int medicineInternalWound=0;
+        int medicineMindwound = 0;
         for (int i = 0; i < 3; i++)
         {
             if (herbsReadyToCombin[i].getHerbName != "空")
@@ -81,6 +82,7 @@ public class CraftManager : MonoBehaviour
                 count++;
                 medicineOutWound += herbsReadyToCombin[i].getOutsideWound;
                 medicineInternalWound += herbsReadyToCombin[i].getInternalWound;
+                medicineMindwound += herbsReadyToCombin[i].getMindWound;
             }
             herbsReadyToCombin[i] = mainHerbs.getHerbList[0];
         }
@@ -88,29 +90,35 @@ public class CraftManager : MonoBehaviour
         {
             medicineInternalWound /= count;
             medicineOutWound /= count;
+            medicineMindwound /= count;
         }
         Medicine medicine = new Medicine(); 
         medicine.ChangeInternalWound(medicineInternalWound);
         medicine.ChangeOutsideWound(medicineOutWound);
         medicine.ChangeSprite(medicineExamples.getMedicinesList[count].getMedicineSprite);//从1开始后是药品样例
         medicine.ChangeName(medicineExamples.getMedicinesList[count].getMedicineName);
+        medicine.ChangeMindWound(medicineMindwound);
         medicine.ChangeDetail();
         if(count > 0)
             inventoryManager.AddComebineMedicine(medicine);
         EventManager.CallMedicineInventoryUPdate();
         ImageUpDate();
+
         if (medicineReadyToCombin.getMedicineName != "空")
         {
             medicineOutWound = 0;
             medicineInternalWound = 0;
+            medicineMindwound = 0;
             for (int i = 0; i < 2; i++)
             {
                 medicineInternalWound += assistHerbToCombin[i].getInternalWound;
                 medicineOutWound += assistHerbToCombin[i].getOutsideWound;
+                medicineMindwound += assistHerbToCombin[i].getMindWound;
                 assistHerbToCombin[i] = assistHerbs.getHerbList[0];
             }
             medicineReadyToCombin.ChangeOutsideWound(medicineOutWound + medicineReadyToCombin.getOutsideWound);
             medicineReadyToCombin.ChangeInternalWound(medicineInternalWound + medicineReadyToCombin.getInsideWound);
+            medicineReadyToCombin.ChangeMindWound(medicineReadyToCombin.getMindWound + medicineMindwound);
             medicineReadyToCombin.ChangeDetail();
             inventoryManager.AddComebineMedicine(medicineReadyToCombin);
             medicineReadyToCombin = medicineExamples.getMedicinesList[0];
