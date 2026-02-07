@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5cb0e6d1f7b678e4e8c8d751faf1bec7, type: 3}
+  m_Name: MdeicineData
+  m_EditorClassIdentifier: 
+  medicineList:
+  - medicineName: "\u5C0F\u725B\u903C\u836F"
+    medicineDetail: "\u5403\u4E86\u5C31\u5F88\u725B\u903C\u7684\u836F"
+    medicineSprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
+    insideWound: 0
+    outsideWound: 5
+    mindWound: 5
+  - medicineName: "\u5927\u725B\u903C\u836F"
+    medicineDetail: "\u5403\u4E86\u5C31\u5F88\u7279\u522B\u725B\u903C\u7684\u836F\uFF0C\u5F88\u5389\u5BB3"
+    medicineSprite: {fileID: -5177388603050735206, guid: 8884154dfe85442a3a3578be807dbcdf, type: 3}
+    insideWound: 0
+    outsideWound: 5
+    mindWound: 5
+  - medicineName: "\u7279\u725B\u903C\u836F"
+    medicineDetail: "\u5403\u4E86\u5C31\u5F88\u7279\u522B\u725B\u903C\u7684\u836F\uFF0C\u5927\u6982"
+    medicineSprite: {fileID: 7482667652216324306, guid: 48e93eef0688c4a259cb0eddcd8661f7, type: 3}
+    insideWound: 0
+    outsideWound: 5
+    mindWound: 5
